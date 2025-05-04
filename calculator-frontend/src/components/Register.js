@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { register, login } from '../services/api.service';
 
 const Register = ({ onLogin }) => {
   const [username, setUsername] = useState('');
@@ -24,29 +24,24 @@ const Register = ({ onLogin }) => {
     try {
       console.log('Attempting to register user:', username);
       
-      // Register the user
-      const response = await axios.post('http://localhost:3001/auth/register', {
-        username,
-        password
-      });
-      
-      console.log('Registration successful:', response.data);
+      // Register the user using the service
+      const response = await register(username, password);
+      console.log('Registration successful:', response);
       
       // After registration, login
-      const loginResponse = await axios.post('http://localhost:3001/auth/login', {
-        username,
-        password
-      });
+      const userData = await login(username, password);
+      console.log('Login after registration successful, user data:', userData);
       
-      console.log('Login response after registration:', loginResponse.data);
-      
-      // Store the token
-      localStorage.setItem('token', loginResponse.data.access_token);
+      // Verify that userData contains required fields
+      if (!userData || !userData.id || !userData.username || !userData.role) {
+        console.error('Incomplete user data received:', userData);
+        throw new Error('Login successful but received incomplete user data');
+      }
       
       // Call the login handler with user info
-      onLogin(loginResponse.data.user);
-      
+      onLogin(userData);
       console.log('User logged in successfully after registration');
+      
     } catch (err) {
       console.error('Registration error:', err);
       

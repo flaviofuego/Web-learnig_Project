@@ -6,30 +6,56 @@ import Register from './components/Register';
 import Calculator from './components/Calculator';
 import History from './components/History';
 import NavBar from './components/NavBar';
-
-// ... importaciones ...
+import { logout } from './services/api.service';
 
 function App() {
   const [user, setUser] = useState(null);
   
   useEffect(() => {
-    // Verificar si el usuario ya está logueado
+    // Check if user is already logged in
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem('token');
+    
+    if (storedUser && token) {
+      console.log('Restoring user session from localStorage');
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        
+        // Verify if user data is complete
+        if (parsedUser && parsedUser.id && parsedUser.username && parsedUser.role) {
+          setUser(parsedUser);
+          console.log('User session restored successfully');
+        } else {
+          console.error('Incomplete user data in localStorage:', parsedUser);
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+        }
+      } catch (error) {
+        console.error('Error parsing user data from localStorage:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    } else {
+      console.log('No user session found in localStorage');
     }
   }, []);
 
   const handleLogin = (userData) => {
-    console.log('Login exitoso, datos de usuario:', userData);
-    setUser(userData);
+    console.log('Login handler called with user data:', userData);
+    
+    // Store user data in localStorage
     localStorage.setItem('user', JSON.stringify(userData));
+    
+    // Update state
+    setUser(userData);
+    console.log('User state updated after login');
   };
 
   const handleLogout = () => {
+    console.log('Logging out user:', user?.username);
+    logout(); // This will clear localStorage
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    console.log('User logged out successfully');
   };
 
   return (

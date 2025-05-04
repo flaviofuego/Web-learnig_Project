@@ -1,177 +1,181 @@
-# Calculator App with User Roles and JWT Authentication
+# Calculadora con Historial y Roles de Usuario
 
-This is a full-stack application with a React frontend, NestJS backend, and PostgreSQL database using Supabase. The application features a calculator with operation history, user roles (admin/user), and JWT authentication.
+Una aplicación full-stack de calculadora con historial de operaciones, sistema de autenticación y roles de usuario.
+## Características
 
-## Features
+- **Calculadora funcional** con operaciones básicas
+- **Historial de operaciones** guardado en base de datos
+- **Sistema de autenticación** con JWT
+- **Roles de usuario**:
+  - **Usuario normal**: Puede usar la calculadora y ver su propio historial
+  - **Administrador**: Puede usar la calculadora y ver el historial de todos los usuarios
+- **Interfaz responsiva** desarrollada con React y Bootstrap
 
-- **Calculator functionality** with operation history
-- **User authentication** with JWT
-- **Role-based access control**:
-  - Regular users can use the calculator and view their own history
-  - Admins can use the calculator, view all users' history, and filter by user
-- **Secure API** with protected endpoints
-- **Database integration** with PostgreSQL via Supabase
-
-## Technology Stack
+## Tecnologías Utilizadas
 
 ### Frontend
 - React
-- React Router for navigation
-- Axios for API requests
-- Bootstrap for styling
+- React Router para navegación
+- Axios para solicitudes HTTP
+- Bootstrap para estilos y componentes UI
 
 ### Backend
-- NestJS (Node.js framework)
-- TypeORM for database operations
-- JWT for authentication
-- Passport.js for security
-- bcrypt for password hashing
+- NestJS (framework de Node.js)
+- TypeORM para operaciones con la base de datos
+- JWT para autenticación
+- Passport.js para manejo de estrategias de autenticación
+- bcrypt para encriptación de contraseñas
 
-### Database
-- PostgreSQL (via Supabase)
+### Base de Datos
+- PostgreSQL (Alojada en Supabase)
 
-## Project Structure
+## Estructura del Proyecto
 
 ```
-calculator-project/
-│
-├── calculator-frontend/     # React frontend
+/
+├── calculator-frontend/     # Aplicación React
 │   ├── public/
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── services/        # API services
-│   │   └── App.js           # Main App component
-│   ├── package.json
-│   └── README.md
+│   └── src/
+│       ├── components/      # Componentes React
+│       ├── services/        # Servicios para comunicación con API
+│       └── App.js           # Componente principal
 │
-└── calculator-backend/      # NestJS backend
+└── calculator-backend/      # API de NestJS
     ├── src/
-    │   ├── auth/            # Authentication module
-    │   ├── calculations/    # Calculations module
-    │   ├── users/           # Users module
-    │   ├── entities/        # Database entities
-    │   └── config/          # Configuration
-    ├── .env                 # Environment variables
-    ├── package.json
-    └── README.md
+    │   ├── auth/            # Módulo de autenticación
+    │   ├── calculations/    # Módulo de cálculos
+    │   ├── users/           # Módulo de usuarios
+    │   └── entities/        # Entidades de base de datos
+    └
 ```
 
-## Setup Instructions
+## Requisitos
 
-### Prerequisites
-- Node.js and npm installed
-- Supabase account (or any PostgreSQL database)
+- Node.js (v14 o superior)
+- npm o yarn
+- PostgreSQL (o una cuenta en Supabase)
 
-### Backend Setup
+## Configuración e Instalación
 
-1. Navigate to the backend directory:
+### Backend
+
+1. Navega al directorio del backend:
    ```bash
    cd calculator-backend
    ```
 
-2. Install dependencies:
+2. Instala las dependencias:
    ```bash
    npm install
    ```
 
-3. Create a `.env` file in the root directory with the following variables:
+3. Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
    ```
    PORT=3001
-   JWT_SECRET=your_very_secure_secret_key
-   SUPABASE_URL=your_supabase_postgres_connection_string
-   SUPABASE_KEY=your_supabase_api_key
+   JWT_SECRET=tu_clave_secreta_muy_segura
+   DATABASE_URL=postgresql://usuario:contraseña@host:puerto/basededatos
    ```
 
-4. Start the backend server:
+4. Ejecuta la aplicación en modo desarrollo:
    ```bash
    npm run start:dev
    ```
 
-### Frontend Setup
+### Frontend
 
-1. Navigate to the frontend directory:
+1. Navega al directorio del frontend:
    ```bash
    cd calculator-frontend
    ```
 
-2. Install dependencies:
+2. Instala las dependencias:
    ```bash
    npm install
    ```
 
-3. Start the development server:
+3. Inicia la aplicación:
    ```bash
    npm start
    ```
 
-4. Access the application at `http://localhost:3000`
+4. Accede a la aplicación en: `http://localhost:3000`
 
-## Database Setup with Supabase
+## Uso de la Aplicación
 
-1. Create a new project in Supabase
-2. Go to the SQL Editor and execute the following SQL:
+### Registro e Inicio de Sesión
 
-```sql
--- Create users table
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  username VARCHAR(255) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role VARCHAR(50) DEFAULT 'user' NOT NULL
-);
+1. Al acceder por primera vez, regístrate con un nombre de usuario y contraseña
+2. Inicia sesión con tus credenciales
 
--- Create calculations table
-CREATE TABLE calculations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  expression VARCHAR(255) NOT NULL,
-  result VARCHAR(255) NOT NULL,
-  timestamp TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE
-);
+### Usando la Calculadora
 
--- Create an admin user (password: admin123)
-INSERT INTO users (username, password, role)
-VALUES ('admin', '$2b$10$X7aHn1bVQR.qX5A7IhQJVecQyB4cOr4oTTk0/uDWGQsVC3ZGKfzb2', 'admin');
-```
+1. Navega a la sección "Calculator"
+2. Usa los botones numéricos y de operaciones para realizar cálculos
+3. Los resultados se guardarán automáticamente en tu historial
+
+### Visualizando el Historial
+
+1. Navega a la sección "History"
+2. Verás una lista de tus cálculos anteriores (o de todos los usuarios si eres administrador)
+3. Si eres administrador, puedes filtrar el historial por usuario
+
+## Usuarios por Defecto
+
+Después de configurar la base de datos, se crean dos usuarios por defecto:
+
+1. **Administrador**
+   - Username: `admin`
+   - Password: `admin123`
+   - Role: `admin`
+
+2. **Usuario Regular**
+   - Username: `user`
+   - Password: `user123`
+   - Role: `user`
 
 ## API Endpoints
 
-### Authentication
-- `POST /auth/register` - Register a new user
-- `POST /auth/login` - Login and get JWT token
+### Autenticación
+- `POST /auth/register` - Registrar un nuevo usuario
+- `POST /auth/login` - Iniciar sesión y obtener token JWT
 
-### Calculations
-- `POST /calculations` - Perform a calculation and save to history
-- `GET /calculations/history` - Get calculation history (filtered by user role)
-- `GET /calculations/history/:userId` - Get calculation history for a specific user (admin only)
+### Cálculos
+- `POST /calculations` - Realizar un cálculo y guardarlo en el historial
+- `GET /calculations/history` - Obtener historial de cálculos (filtrado por rol)
+- `GET /calculations/history/:userId` - Obtener historial de un usuario específico (solo admin)
 
-### Users
-- `GET /users` - Get all users (admin only)
+### Usuarios
+- `GET /users` - Obtener todos los usuarios (solo admin)
 
-## User Roles
+## Características de Seguridad
 
-### Regular User
-- Can register and login
-- Can use the calculator
-- Can view their own calculation history
+- Autenticación con tokens JWT
+- Encriptación de contraseñas con bcrypt
+- Control de acceso basado en roles
+- Validación de datos en cliente y servidor
 
-### Admin
-- Can use the calculator
-- Can view all users' calculation history
-- Can filter history by user
+## Desarrollo
 
-## Security Features
+### Comandos Útiles
 
-- JWT token authentication
-- Password hashing with bcrypt
-- Role-based access control
-- Protected API endpoints
-- Input validation
+```bash
+# Backend
+npm run start:dev     # Iniciar en modo desarrollo
+npm run build         # Compilar para producción
+npm run start:prod    # Ejecutar versión de producción
 
-## Future Enhancements
+# Frontend
+npm start             # Iniciar en modo desarrollo
+npm run build         # Compilar para producción
+npm test              # Ejecutar pruebas
+```
 
-- Add pagination for history
-- Add more complex calculator functions
-- Implement password reset functionality
-- Add user profile management
-- Add more detailed analytics for admins
+## Licencia
+
+Este proyecto se distribuye bajo la licencia MIT.
+
+## Autor
+
+Flavio Arregoces
+
+---

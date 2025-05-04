@@ -1,21 +1,10 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { calculate } from '../services/api.service';
 
 const Calculator = ({ user }) => {
   const [display, setDisplay] = useState('0');
   const [error, setError] = useState('');
   const [lastResult, setLastResult] = useState(null);
-
-  // Setup axios with auth token
-  const getAuthAxios = () => {
-    const token = localStorage.getItem('token');
-    return axios.create({
-      baseURL: 'http://localhost:3001',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-  };
 
   const handleButtonClick = (value) => {
     setError('');
@@ -69,14 +58,15 @@ const Calculator = ({ user }) => {
         return;
       }
       
-      // Then save to the server
-      const authAxios = getAuthAxios();
-      const response = await authAxios.post('/calculations', {
-        expression
-      });
+      console.log('Sending calculation to server:', expression);
       
-      setLastResult(response.data);
+      // Then save to the server
+      const response = await calculate(expression);
+      console.log('Calculation response:', response);
+      
+      setLastResult(response);
     } catch (err) {
+      console.error('Calculation error:', err);
       setError(err.response?.data?.message || 'An error occurred');
     }
   };
@@ -96,6 +86,7 @@ const Calculator = ({ user }) => {
         <div className="card">
           <div className="card-header">
             Calculator
+            {user && <span className="float-end text-muted">User: {user.username}</span>}
           </div>
           <div className="card-body">
             {error && <div className="alert alert-danger">{error}</div>}

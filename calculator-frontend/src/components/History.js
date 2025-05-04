@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { getHistory, getUserHistory, getUsers } from '../services/api.service';
 
 const History = ({ user }) => {
   const [calculations, setCalculations] = useState([]);
@@ -8,36 +8,25 @@ const History = ({ user }) => {
   const [selectedUser, setSelectedUser] = useState('');
   const [users, setUsers] = useState([]);
 
-  // Setup axios with auth token
-  const getAuthAxios = () => {
-    const token = localStorage.getItem('token');
-    return axios.create({
-      baseURL: 'http://localhost:3001',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-  };
-
   // Fetch calculation history
   const fetchHistory = async () => {
     try {
       setLoading(true);
-      const authAxios = getAuthAxios();
+      console.log('Fetching history for user:', user);
       
-      let response;
+      let data;
       if (user.role === 'admin' && selectedUser) {
         // Admin viewing a specific user's history
         console.log('Admin fetching history for user:', selectedUser);
-        response = await authAxios.get(`/calculations/history/${selectedUser}`);
+        data = await getUserHistory(selectedUser);
       } else {
         // Regular user or admin viewing all history
         console.log('Fetching history for current user or all (admin)');
-        response = await authAxios.get('/calculations/history');
+        data = await getHistory();
       }
       
-      console.log('History response:', response.data);
-      setCalculations(response.data);
+      console.log('History data received:', data);
+      setCalculations(data);
       setError('');
     } catch (err) {
       console.error('Error fetching history:', err);
@@ -52,9 +41,10 @@ const History = ({ user }) => {
     if (user.role !== 'admin') return;
     
     try {
-      const authAxios = getAuthAxios();
-      const response = await authAxios.get('/users');
-      setUsers(response.data);
+      console.log('Admin fetching users for filter');
+      const data = await getUsers();
+      console.log('Users data received:', data);
+      setUsers(data);
     } catch (err) {
       console.error('Failed to load users:', err);
     }
@@ -62,12 +52,19 @@ const History = ({ user }) => {
   
   useEffect(() => {
     console.log('History component mounted, user:', user);
-    fetchHistory();
-    if (user.role === 'admin') {
-      fetchUsers();
+    
+    // Ensure we have a valid user with a role before proceeding
+    if (user && user.id && user.role) {
+      fetchHistory();
+      if (user.role === 'admin') {
+        fetchUsers();
+      }
+    } else {
+      console.error('Invalid user object in History component:', user);
+      setError('User information is incomplete. Please login again.');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.role, selectedUser]);
+  }, [user, selectedUser]);
   
   const handleUserChange = (e) => {
     setSelectedUser(e.target.value);
