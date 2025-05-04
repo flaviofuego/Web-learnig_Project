@@ -15,21 +15,44 @@ axios.interceptors.request.use(
 );
 
 axios.interceptors.response.use(
-  response => {
-    console.log(`Response received from: ${response.config.url}`, {
-      status: response.status,
-      data: response.data ? 'Data received' : 'No data'
-    });
-    return response;
-  },
-  error => {
-    console.error('API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message
-    });
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Si el error es 401 (Unauthorized) y no hemos intentado actualizar el token
+    if (error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // Obtener el refresh token y el userId del localStorage
+        const refreshToken = localStorage.getItem('refresh_token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!refreshToken || !user) {
+          // Si no hay refresh token o usuario, forzar logout
+          logout();
+          return Promise.reject(error);
+        }
+        
+        // Llamar al endpoint de refresh
+        const response = await axios.post(`${API_URL}/auth/refresh`, {
+          userId: user.id,
+          refreshToken,
+        });
+        
+        // Guardar el nuevo access token
+        localStorage.setItem('token', response.data.access_token);
+        
+        // Reintentar la solicitud original
+        originalRequest.headers.Authorization = `Bearer ${response.data.access_token}`;
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // Si falla el refresh, forzar logout
+        logout();
+        return Promise.reject(refreshError);
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -66,9 +89,29 @@ export const login = async (username, password) => {
     user: response.data.user
   });
   
-  // Store the token and return user data
+  // Guardar tokens y datos de usuario
   localStorage.setItem('token', response.data.access_token);
+  localStorage.setItem('refresh_token', response.data.refresh_token);
+  localStorage.setItem('user', JSON.stringify(response.data.user));
+  
   return response.data.user;
+};
+
+export const logout = async () => {
+  try {
+    // Llamar al endpoint de logout si hay un token
+    if (localStorage.getItem('token')) {
+      const authAxios = getAuthAxios();
+      await authAxios.post('/auth/logout');
+    }
+  } catch (error) {
+    console.error('Error during logout:', error);
+  } finally {
+    // Limpiar localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+  }
 };
 
 export const register = async (username, password) => {
@@ -83,11 +126,7 @@ export const register = async (username, password) => {
   return response.data;
 };
 
-export const logout = () => {
-  console.log('Logout service called');
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-};
+
 
 // Calculator services
 export const calculate = async (expression) => {
@@ -147,6 +186,7 @@ export const getUsers = async () => {
 
 const apiService = {
   login,
+  
   register,
   logout,
   calculate,

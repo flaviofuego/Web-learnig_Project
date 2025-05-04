@@ -1,3 +1,4 @@
+// src/App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -7,56 +8,57 @@ import Calculator from './components/Calculator';
 import History from './components/History';
 import NavBar from './components/NavBar';
 import { logout } from './services/api.service';
+import { jwtDecode } from 'jwt-decode'; // Necesitas instalar esta biblioteca: npm install jwt-decode
 
 function App() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Función para verificar si el token ha expirado
+  const isTokenExpired = (token) => {
+    if (!token) return true;
+    
+    try {
+      const decoded = jwtDecode(token);
+      return decoded.exp * 1000 < Date.now();
+    } catch (error) {
+      return true;
+    }
+  };
   
   useEffect(() => {
-    // Check if user is already logged in
+    // Verificar si hay un usuario y token almacenados
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('token');
     
     if (storedUser && token) {
-      console.log('Restoring user session from localStorage');
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        
-        // Verify if user data is complete
-        if (parsedUser && parsedUser.id && parsedUser.username && parsedUser.role) {
-          setUser(parsedUser);
-          console.log('User session restored successfully');
-        } else {
-          console.error('Incomplete user data in localStorage:', parsedUser);
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
-        }
-      } catch (error) {
-        console.error('Error parsing user data from localStorage:', error);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+      // Verificar si el token ha expirado
+      if (isTokenExpired(token)) {
+        // Si ha expirado, intentar usar el refresh token (esto lo maneja el interceptor)
+        console.log('Token expirado, cerrando sesión');
+        logout();
+        setUser(null);
+      } else {
+        // Si el token es válido, restaurar el usuario
+        setUser(JSON.parse(storedUser));
       }
-    } else {
-      console.log('No user session found in localStorage');
     }
+    
+    setLoading(false);
   }, []);
 
   const handleLogin = (userData) => {
-    console.log('Login handler called with user data:', userData);
-    
-    // Store user data in localStorage
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    // Update state
     setUser(userData);
-    console.log('User state updated after login');
   };
 
   const handleLogout = () => {
-    console.log('Logging out user:', user?.username);
-    logout(); // This will clear localStorage
+    logout();
     setUser(null);
-    console.log('User logged out successfully');
   };
+
+  if (loading) {
+    return <div className="text-center mt-5">Cargando...</div>;
+  }
 
   return (
     <Router>

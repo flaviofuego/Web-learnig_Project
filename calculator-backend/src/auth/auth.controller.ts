@@ -1,6 +1,28 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { 
+  Controller, 
+  Post, 
+  Body, 
+  UseGuards,  // Añadir esta importación
+  Request, 
+  HttpException,
+  HttpStatus,
+  HttpCode,   // Añadir esta importación
+  Logger
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
+
+
+
+// Interfaz para tipar la solicitud
+interface RequestWithUser {
+  user: {
+    userId: string;
+    username: string;
+    role: string;
+  }
+}
 
 @Controller('auth')
 export class AuthController {
@@ -45,5 +67,16 @@ export class AuthController {
         error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+  @Post('refresh')
+  async refreshTokens(@Body() body: { userId: string; refreshToken: string }) {
+    return this.authService.refreshToken(body.userId, body.refreshToken);
+  }
+  
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Request() req: RequestWithUser) {
+    return this.authService.logout(req.user.userId);
   }
 }
