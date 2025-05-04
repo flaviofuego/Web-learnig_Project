@@ -1,24 +1,23 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../entities/user.entity';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-  constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   @Get()
   @Roles('admin')
   async getAllUsers() {
-    const users = await this.userRepository.find({
-      select: ['id', 'username', 'role'] // Exclude password
+    const users = await this.prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        role: true,
+      },
     });
     return users;
   }
